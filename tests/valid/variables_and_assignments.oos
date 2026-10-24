@@ -1,0 +1,12 @@
+class Main:
+    def main(self): -
+        int x, y;
+        int total;
+        ;
+
+        x = 10;
+        y = x + 3;
+        total = (x + y) * 2;
+        print total;
+        print x, y;
+        ;
