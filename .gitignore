@@ -1,0 +1,19 @@
+# Python environment and cache
+.venv/
+__pycache__/
+*.py[cod]
+
+# ANTLR generated files — regenerated from oos.g4
+oosLexer.py
+oosParser.py
+oosListener.py
+oosVisitor.py
+*.interp
+*.tokens
+
+# Downloaded tools
+*.jar
+
+# Local editor settings
+.vscode/
+.idea/
