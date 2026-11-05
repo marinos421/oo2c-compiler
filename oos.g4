@@ -30,6 +30,9 @@ statements
 
 statement
     : assignment_stat
+    | if_stat
+    | while_stat
+    | input_stat
     | print_stat
     ;
 
@@ -37,16 +40,77 @@ assignment_stat
     : ID '=' expression
     ;
 
+if_stat
+    : 'if' '(' condition ')' ':'
+      (statements ';')?
+      else_part
+      'endif'
+    ;
+
+else_part
+    : 'else' ':'
+      (statements ';')?
+    |
+    ;
+
+while_stat
+    : 'while' '(' condition ')' ':'
+      statements?
+      'endwhile'
+    ;
+
+input_stat
+    : 'input' ID
+    ;
+
 print_stat
     : 'print' expression (',' expression)*
     ;
 
+condition
+    : boolterm ('or' boolterm)*
+    ;
+
+boolterm
+    : boolfactor ('and' boolfactor)*
+    ;
+
+boolfactor
+    : 'not' '[' condition ']'
+    | '[' condition ']'
+    | expression rel_oper expression
+    ;
+
+rel_oper
+    : '=='
+    | '<='
+    | '>='
+    | '>'
+    | '<'
+    | '!='
+    ;
+
 expression
-    : ('+' | '-')? term (('+' | '-') term)*
+    : optional_sign term (add_oper term)*
+    ;
+
+optional_sign
+    : add_oper
+    |
     ;
 
 term
-    : factor (('*' | '/') factor)*
+    : factor (mul_oper factor)*
+    ;
+
+add_oper
+    : '+'
+    | '-'
+    ;
+
+mul_oper
+    : '*'
+    | '/'
     ;
 
 factor
@@ -62,6 +126,10 @@ INTEGER
 
 ID
     : [A-Za-z] [A-Za-z0-9_]*
+    ;
+
+COMMENTS
+    : '#' ~[#]* '#' -> skip
     ;
 
 WS
