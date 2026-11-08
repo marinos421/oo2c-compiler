@@ -1,0 +1,25 @@
+class Counter:
+    int value;
+    ;
+
+    def __init__(self, int start): Counter
+        self.value = start;
+        ;
+
+    def increment(self, int amount): -
+        self.value = self.value + amount;
+        ;
+
+    def get_value(self): int
+        return self.value;
+        ;
+
+class Main:
+    Counter counter;
+    ;
+
+    def main(self): -
+        counter = Counter(10);
+        counter.increment(5);
+        print counter.get_value();
+        ;

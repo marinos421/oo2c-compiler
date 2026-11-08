@@ -1,0 +1,12 @@
+class Counter:
+    int value;
+    ;
+
+    def __init__(int start): Counter
+        self.value = start;
+        ;
+
+class Main:
+    def main(self): -
+        print 0;
+        ;
