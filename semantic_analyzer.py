@@ -138,18 +138,121 @@ class SemanticAnalyzer(oosListener):
         self.check_identifier_usage(ctx)
         
     
+    
     def enterObject_method_call(self, ctx):
         # Example: obj.calculate(10)
-        # Check the receiver, not the method name.
+        # Check that the receiver is a class object.
 
-        # Example: self.obj.calculate(10)
-        # Member validation will be implemented later.
+        # self.obj.method() will be handled later.
         if ctx.getChild(0).getText() == "self":
             return
 
         receiver = ctx.ID()
+        name = receiver.getText()
 
-        self.check_variable(receiver)
+        symbol = self.current_scope.resolve(name)
+
+        if symbol is None:
+            self.check_variable(receiver)
+            return
+
+        # Only variables, parameters and fields can be receivers.
+        if symbol.kind not in ("variable", "parameter", "field"):
+            self.errors.append(
+                f"Semantic error at line {receiver.symbol.line}: "
+                f"Invalid method receiver '{name}'"
+            )
+            return
+
+        # An integer cannot have methods.
+        if symbol.type_name == "int":
+            self.errors.append(
+                f"Semantic error at line {receiver.symbol.line}: "
+                f"Invalid method receiver '{name}': "
+                f"expected an object, got int"
+            )
+            return
+        
+        
+        # Find the receiver's class.
+        class_name = symbol.type_name
+        class_scope = self.collector.class_scopes.get(class_name)
+
+        if class_scope is None:
+            return
+
+        # Find the requested method.
+        method_name = ctx.func_call().ID().getText()
+        method_symbol = class_scope.symbols.get(method_name)
+
+        if method_symbol is None or method_symbol.kind != "method":
+            self.errors.append(
+                f"Semantic error at line {ctx.start.line}: "
+                f"Unknown method '{method_name}' "
+                f"in class '{class_name}'"
+            )
+            return
+        
+        
+        # Get the declared parameters of the method.
+        method_scope = self.collector.method_scopes.get(
+            (class_name, method_name)
+        )
+
+        if method_scope is None:
+            return
+
+        expected_count = sum(
+            1
+            for symbol in method_scope.symbols.values()
+            if symbol.kind == "parameter"
+            and symbol.name != "self"
+        )
+
+        # Count arguments supplied in the method call.
+        arglist = ctx.func_call().arguments().arglist()
+        actual_count = len(arglist.expression())
+
+        if expected_count != actual_count:
+            self.errors.append(
+                f"Semantic error at line {ctx.start.line}: "
+                f"Argument count mismatch for method "
+                f"'{method_name}': expected {expected_count}, "
+                f"got {actual_count}"
+            )
+            return
+
+        
+        # Check argument types only when counts match.
+        expected_parameters = [
+            param
+            for param in method_scope.symbols.values()
+            if param.kind == "parameter"
+            and param.name != "self"
+        ]
+
+        arguments = arglist.expression()
+
+        for index, (parameter, argument) in enumerate(
+            zip(expected_parameters, arguments), start=1
+        ):
+            expected_type = parameter.type_name
+            actual_type = self.get_expression_type(argument)
+
+            # Unknown expression types are handled separately.
+            if actual_type is None:
+                continue
+
+            if expected_type != actual_type:
+                self.errors.append(
+                    f"Semantic error at line {argument.start.line}: "
+                    f"Argument type mismatch in method "
+                    f"'{method_name}', argument {index}: "
+                    f"expected '{expected_type}', "
+                    f"got '{actual_type}'"
+                )
+
+
 
     
 
